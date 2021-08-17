@@ -25,12 +25,15 @@ walk = False
 #define colours
 BG = (255,255,255)
 track = pygame.image.load('gambar/background/Track.png')
-track_rect = track.get_rect()
-track_rect.center = (0,335)
+track_width = track.get_width() -3
+#track_rect = track.get_rect()
+#track_rect.center = (0,335)
+
 
 def draw_bg():
     screen.fill(BG)
-    screen.blit(track, track_rect)
+    screen.blit(track, (floor_x_pos, 325))
+    screen.blit(track, (floor_x_pos + track_width, 325))
 
 class Manusia(pygame.sprite.Sprite):
     def __init__(self, char_type, x, y,scale, speed):
@@ -40,22 +43,24 @@ class Manusia(pygame.sprite.Sprite):
         self.speed = speed
         self.vel_y = 0
         self.jump = False
+        self.in_air = True
         self.animation_list = []
         self.frame_index = 0
         self.action = 0
         self.update_time = pygame.time.get_ticks()
-        temp_list = []
-        for i in range(5):
-            img = pygame.image.load(f'gambar/{self.char_type}/Diam/{i}.png')
-            img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
-            temp_list.append(img)
-        self.animation_list.append(temp_list)
-        temp_list = []
-        for i in range(6):
-            img = pygame.image.load(f'gambar/{self.char_type}/Lari/{i}.png')
-            img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
-            temp_list.append(img)
-        self.animation_list.append(temp_list)
+
+        #load images 
+        animation_type = ['Diam', 'Lari', 'Lompat', 'Mati']
+        for animation in animation_type:
+            #reset temporary list
+            temp_list = []
+            #count number of files
+            num_of_frames = len(os.listdir(f'gambar/{self.char_type}/{animation}'))
+            for i in range(num_of_frames):
+                img = pygame.image.load(f'gambar/{self.char_type}/{animation}/{i}.png')
+                img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
+                temp_list.append(img)
+            self.animation_list.append(temp_list)
         self.image = self.animation_list[self.action][self.frame_index]
         self.rect = self.image.get_rect()
         self.rect.center = (x,y)
@@ -65,9 +70,10 @@ class Manusia(pygame.sprite.Sprite):
         dy = 0
 
         #jump
-        if self.jump == True:
-            self.vel_y = -11
+        if self.jump == True and self.in_air == False:
+            self.vel_y = -15
             self.jump = False
+            self.in_air = True
 
         #apply gravity
         self.vel_y += GRAVITY
@@ -78,6 +84,7 @@ class Manusia(pygame.sprite.Sprite):
         #check collision with floor
         if self.rect.bottom + dy >335:
             dy = 335 - self.rect.bottom
+            self.in_air = False
 
 
         #update rect position
@@ -115,12 +122,18 @@ pemain = Manusia('pemain',125,300,2,5)
 kerumunan = Manusia('kerumunan',200,300,2,5)
 
 run = True
+floor_x_pos = 0
+game_speed = 5
 
 while run:
 
-    clock.tick(FPS)
-
+    floor_x_pos -= 1
     draw_bg()
+    if floor_x_pos <= -track_width:
+        floor_x_pos = 0
+    floor_x_pos -= game_speed
+
+    clock.tick(FPS)
 
     pemain.update_animation()
     pemain.draw()
@@ -128,7 +141,9 @@ while run:
 
     #update player action
     if pemain.alive:
-        if walk:
+        if pemain.in_air:
+            pemain.update_action(2)#lompat
+        elif walk:
             pemain.update_action(1)#1: lari
         else:
             pemain.update_action(0)#0: diam
@@ -145,6 +160,9 @@ while run:
                 walk = True
 
         #keyboard release
+
+
+
 
 
 
