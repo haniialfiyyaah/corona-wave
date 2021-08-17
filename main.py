@@ -22,18 +22,21 @@ walk = False
 
 
 
-#define colours
+#world
 BG = (255,255,255)
-track = pygame.image.load('gambar/background/Track.png')
-track_width = track.get_width() -3
-#track_rect = track.get_rect()
-#track_rect.center = (0,335)
+bg_img = pygame.image.load('gambar/background/bg1.png')
+bg_width = bg_img.get_width()
+track = pygame.image.load('gambar/background/track2.png')
+track_width = track.get_width()
 
 
 def draw_bg():
     screen.fill(BG)
-    screen.blit(track, (floor_x_pos, 325))
-    screen.blit(track, (floor_x_pos + track_width, 325))
+    screen.blit(bg_img, (bg_x_pos, 0))
+    screen.blit(bg_img, (bg_x_pos + bg_width, 0))
+    screen.blit(bg_img, (bg_x_pos + bg_width*2, 0))
+    screen.blit(track, (floor_x_pos, 405))
+    screen.blit(track, (floor_x_pos + track_width, 405))
 
 class Manusia(pygame.sprite.Sprite):
     def __init__(self, char_type, x, y,scale, speed):
@@ -82,8 +85,8 @@ class Manusia(pygame.sprite.Sprite):
         dy += self.vel_y
 
         #check collision with floor
-        if self.rect.bottom + dy >335:
-            dy = 335 - self.rect.bottom
+        if self.rect.bottom + dy >405:
+            dy = 405 - self.rect.bottom
             self.in_air = False
 
 
@@ -122,17 +125,16 @@ pemain = Manusia('pemain',125,300,2,5)
 kerumunan = Manusia('kerumunan',200,300,2,5)
 
 run = True
+bg_x_pos = 0
 floor_x_pos = 0
-game_speed = 5
+game_speed = 3
+
 
 while run:
 
-    floor_x_pos -= 1
+    
     draw_bg()
-    if floor_x_pos <= -track_width:
-        floor_x_pos = 0
-    floor_x_pos -= game_speed
-
+   
     clock.tick(FPS)
 
     pemain.update_animation()
@@ -162,6 +164,15 @@ while run:
         #keyboard release
 
 
+    if walk:
+#        bg_width -= 1
+        if bg_x_pos <= -(bg_width*2):
+            bg_x_pos = 0
+        bg_x_pos -= game_speed
+#        floor_x_pos -= 1
+        if floor_x_pos <= -track_width:
+            floor_x_pos = 0
+        floor_x_pos -= game_speed
 
 
 
