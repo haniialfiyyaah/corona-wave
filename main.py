@@ -2,6 +2,7 @@ import pygame
 import os
 import random
 import threading
+from threading import Timer
 
 pygame.init()
 
@@ -14,37 +15,41 @@ pygame.display.set_caption("Corona Wave")
 icon = pygame.image.load('gambar/virus/1.png')
 pygame.display.set_icon(icon)
 
-#framerate
+# framerate
 clock = pygame.time.Clock()
 FPS = 60
 
 
-#define game variables
+# define game variables
 GRAVITY = 0.5
 
-#player action
+# player action
 walk = False
 
 
-#obstacle
+# obstacle
 VIRUS = [pygame.image.load(os.path.join('gambar/virus', '0.png')),
-        pygame.image.load(os.path.join('gambar/virus', '1.png'))]
+         pygame.image.load(os.path.join('gambar/virus', '1.png'))]
 
 ORANG_DOUBLE = [pygame.image.load(os.path.join('gambar/orang', 'double1.png')),
-        pygame.image.load(os.path.join('gambar/orang', 'double2.png'))]
+                pygame.image.load(os.path.join('gambar/orang', 'double2.png'))]
 
 ORANG_SINGLE = [pygame.image.load(os.path.join('gambar/orang', 'single1.png')),
-        pygame.image.load(os.path.join('gambar/orang', 'single2.png'))]
+                pygame.image.load(os.path.join('gambar/orang', 'single2.png'))]
+
+VAKSIN = [pygame.image.load(os.path.join('gambar/vaksin', 'vaksin0.png')),
+          pygame.image.load(os.path.join('gambar/vaksin', 'vaksin0.png'))]
 
 
-#world
+# world
 bg_img = pygame.image.load('gambar/background/bg1.png')
 bg_width = bg_img.get_width()
 track = pygame.image.load('gambar/background/track2.png')
 track_width = track.get_width()
 
+
 class Manusia(pygame.sprite.Sprite):
-    def __init__(self, char_type, x, y,scale, speed):
+    def __init__(self, char_type, x, y, scale, speed):
         pygame.sprite.Sprite.__init__(self)
         self.alive = True
         self.char_type = char_type
@@ -57,74 +62,76 @@ class Manusia(pygame.sprite.Sprite):
         self.action = 0
         self.update_time = pygame.time.get_ticks()
 
-        #load images 
+        self.protected = False
+
+        # load images
         animation_type = ['Diam', 'Lari', 'Lompat', 'Mati']
         for animation in animation_type:
-            #reset temporary list
+            # reset temporary list
             temp_list = []
-            #count number of files
-            num_of_frames = len(os.listdir(f'gambar/{self.char_type}/{animation}'))
+            # count number of files
+            num_of_frames = len(os.listdir(
+                f'gambar/{self.char_type}/{animation}'))
             for i in range(num_of_frames):
-                img = pygame.image.load(f'gambar/{self.char_type}/{animation}/{i}.png')
-                img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
+                img = pygame.image.load(
+                    f'gambar/{self.char_type}/{animation}/{i}.png')
+                img = pygame.transform.scale(
+                    img, (int(img.get_width() * scale), int(img.get_height() * scale)))
                 temp_list.append(img)
             self.animation_list.append(temp_list)
         self.image = self.animation_list[self.action][self.frame_index]
         self.rect = self.image.get_rect()
-        self.rect.center = (x,y)
+        self.rect.center = (x, y)
 
     def move(self):
         dx = 0
         dy = 0
 
-        #jump
+        # jump
         if self.jump == True and self.in_air == False:
             self.vel_y = -11
             self.jump = False
             self.in_air = True
 
-        #apply gravity
+        # apply gravity
         self.vel_y += GRAVITY
         if self.vel_y > 10:
             self.vel_y
         dy += self.vel_y
 
-        #check collision with floor
-        if self.rect.bottom + dy >405:
+        # check collision with floor
+        if self.rect.bottom + dy > 405:
             dy = 405 - self.rect.bottom
             self.in_air = False
 
-
-        #update rect position
+        # update rect position
         self.rect.x += dx
         self.rect.y += dy
 
-
     def update_animation(self):
-        #update animation
+        # update animation
         ANIMATION_COOLDOWN = 100
-        #update image
-        self.image = self.animation_list[self.action][self.frame_index] 
-        #check time
+        # update image
+        self.image = self.animation_list[self.action][self.frame_index]
+        # check time
         if pygame.time.get_ticks() - self.update_time > ANIMATION_COOLDOWN:
             self.update_time = pygame.time.get_ticks()
             self.frame_index += 1
-        
-        #reset animation
+
+        # reset animation
         if self.frame_index >= len(self.animation_list[self.action]):
             self.frame_index = 0
 
     def update_action(self, new_action):
-        #check action
+        # check action
         if new_action != self.action:
             self.action = new_action
-            #update animation
+            # update animation
             self.frame_index = 0
             self.update_time = pygame.time.get_ticks()
 
-
     def draw(self):
-        screen.blit(self.image, self.rect)    
+        screen.blit(self.image, self.rect)
 
 
 class Obstacle:
@@ -143,6 +150,7 @@ class Obstacle:
     def draw(self, SCREEN):
         SCREEN.blit(self.image[self.type], self.rect)
 
+
 class Virus1(Obstacle):
 
     def __init__(self, image):
@@ -156,6 +164,7 @@ class Virus1(Obstacle):
             self.index = 0
         SCREEN.blit(self.image[self.index // 5], self.rect)
         self.index += 1
+
 
 class Virus2(Obstacle):
 
@@ -171,6 +180,7 @@ class Virus2(Obstacle):
         SCREEN.blit(self.image[self.index // 5], self.rect)
         self.index += 1
 
+
 class Orang(Obstacle):
 
     def __init__(self, image):
@@ -179,18 +189,52 @@ class Orang(Obstacle):
         self.rect.y = 335
 
 
+class Power:
+
+    def __init__(self, image, type):
+        self.image = image
+        self.type = type
+        self.rect = self.image[self.type].get_rect()
+        self.rect.x = SCREEN_WIDTH
+
+    def update(self):
+        self.rect.x -= game_speed
+        if self.rect.x < -self.rect.width:
+            powers.pop()
+
+    def draw(self, SCREEN):
+        SCREEN.blit(self.image[self.type], self.rect)
+
+
+class Vaksin(Power):
+
+    def __init__(self, image):
+        self.type = random.randint(0, 1)
+        # img = pygame.transform.scale(
+        #     image, (int(image.get_width() * 5), int(image.get_height() * 5)))
+        super().__init__(image, self.type)
+        self.rect.y = 340
+
+    # def draw(self, SCREEN):
+    #     if self.index >= 9:
+    #         self.index = 0
+    #     SCREEN.blit(self.image[0], self.rect)
+    #     self.index += 1
+
+
 def main():
-    global game_speed, bg_x_pos, floor_x_pos, points, obstacles, walk
+    global game_speed, bg_x_pos, floor_x_pos, points, obstacles, walk, powers
     run = True
     walk = True
     clock = pygame.time.Clock()
-    pemain = Manusia('pemain',125,300,2,5)
+    pemain = Manusia('pemain', 125, 300, 2, 5)
     game_speed = 5
     bg_x_pos = 0
     floor_x_pos = 0
     points = 0
     font = pygame.font.Font('freesansbold.ttf', 20)
-    obstacles = [] 
+    obstacles = []
+    powers = []
     death_count = 0
 
     def score():
@@ -219,32 +263,34 @@ def main():
             floor_x_pos = 0
         floor_x_pos -= game_speed
 
+    def changeProtected(val):
+        pemain.protected = val
+
     while run:
         for event in pygame.event.get():
-            #quit game
+            # quit game
             if event.type == pygame.QUIT:
                 run = False
-            #keyboard press
+            # keyboard press
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_KP_ENTER and pemain.alive:
                     walk = True
                 if event.key == pygame.K_SPACE and pemain.alive:
                     pemain.jump = True
 
-      
         draw_bg()
         clock.tick(FPS)
         pemain.draw()
         pemain.update_animation()
 
-        #update player action
+        # update player action
         if pemain.alive:
             if pemain.in_air:
-                pemain.update_action(2)#lompat
+                pemain.update_action(2)  # lompat
             elif walk:
-                pemain.update_action(1)#1: lari
+                pemain.update_action(1)  # 1: lari
             else:
-                pemain.update_action(0)#0: diam
+                pemain.update_action(0)  # 0: diam
             pemain.move()
 
             if len(obstacles) == 0:
@@ -257,20 +303,31 @@ def main():
                 elif random.randint(0, 3) == 3:
                     obstacles.append(Virus2(VIRUS))
 
+            if len(powers) == 0:
+                if random.randint(0, 3) == 0:
+                    powers.append(Vaksin(VAKSIN))
+
             for obstacle in obstacles:
                 obstacle.draw(screen)
                 obstacle.update()
-                if pemain.rect.colliderect(obstacle.rect):
-                    pygame.time.delay(2000)
-                    death_count += 1
-                    menu(death_count)
+                if pemain.protected == False:
+                    if pemain.rect.colliderect(obstacle.rect):
+                        pygame.time.delay(2000)
+                        death_count += 1
+                        menu(death_count)
 
-        
-        score()                     
+            # for power in powers:
+            #     power.draw(screen)
+            #     power.update()
+            #     if pemain.rect.colliderect(power.rect):
+            #         changeProtected(True)
+            #         Timer(3.0, changeProtected, False)
+
+        score()
         pygame.display.update()
 
 
-#pygame.quit()
+# pygame.quit()
 
 def menu(death_count):
     global points, walk
@@ -302,7 +359,7 @@ def menu(death_count):
                 pygame.quit()
                 exit()
             if event.type == pygame.KEYDOWN:
-                main()        
+                main()
 
 
 t1 = threading.Thread(target=menu(death_count=0), daemon=True)
