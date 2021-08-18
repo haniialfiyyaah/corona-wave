@@ -37,8 +37,8 @@ ORANG_DOUBLE = [pygame.image.load(os.path.join('gambar/orang', 'double1.png')),
 ORANG_SINGLE = [pygame.image.load(os.path.join('gambar/orang', 'single1.png')),
                 pygame.image.load(os.path.join('gambar/orang', 'single2.png'))]
 
-VAKSIN = [pygame.image.load(os.path.join('gambar/vaksin', 'vaksin0.png')),
-          pygame.image.load(os.path.join('gambar/vaksin', 'vaksin0.png'))]
+VAKSIN = [pygame.image.load(os.path.join('gambar/vaksin', 'vaksin.png')),
+          pygame.image.load(os.path.join('gambar/vaksin', 'vaksin.png'))]
 
 
 # world
@@ -65,7 +65,7 @@ class Manusia(pygame.sprite.Sprite):
         self.protected = False
 
         # load images
-        animation_type = ['Diam', 'Lari', 'Lompat', 'Mati']
+        animation_type = ['Diam', 'Lari', 'Lompat', 'Kebal', 'Jump']
         for animation in animation_type:
             # reset temporary list
             temp_list = []
@@ -209,11 +209,11 @@ class Power:
 class Vaksin(Power):
 
     def __init__(self, image):
-        self.type = random.randint(0, 1)
+        self.type = 0
         # img = pygame.transform.scale(
         #     image, (int(image.get_width() * 5), int(image.get_height() * 5)))
         super().__init__(image, self.type)
-        self.rect.y = 340
+        self.rect.y = 335
 
     # def draw(self, SCREEN):
     #     if self.index >= 9:
@@ -243,10 +243,12 @@ def main():
         if points % 500 == 0:
             game_speed += 1
 
-        text = font.render('Points: ' + str(points), True, (255, 255, 255))
+        text = font.render('Points: ' + str(points), True, (0, 23, 158))
         textRect = text.get_rect()
         textRect.center = (700, 40)
         screen.blit(text, textRect)
+        if points == 2000: #limit vaksin
+            pemain.protected = False
 
     def draw_bg():
         global bg_x_pos, floor_x_pos
@@ -265,6 +267,7 @@ def main():
 
     def changeProtected(val):
         pemain.protected = val
+
 
     while run:
         for event in pygame.event.get():
@@ -285,8 +288,12 @@ def main():
 
         # update player action
         if pemain.alive:
-            if pemain.in_air:
-                pemain.update_action(2)  # lompat
+            if pemain.in_air and pemain.protected:
+                pemain.update_action(4)  # lompat kebal
+            elif pemain.protected:
+                pemain.update_action(3)  # 3: kebal
+            elif pemain.in_air:
+                pemain.update_action(2)  # 3: lompat    
             elif walk:
                 pemain.update_action(1)  # 1: lari
             else:
@@ -296,16 +303,16 @@ def main():
             if len(obstacles) == 0:
                 if random.randint(0, 3) == 0:
                     obstacles.append(Orang(ORANG_SINGLE))
-                elif random.randint(0, 3) == 1:
-                    obstacles.append(Orang(ORANG_DOUBLE))
+#                elif random.randint(0, 3) == 1:
+#                    obstacles.append(Orang(ORANG_DOUBLE))
                 elif random.randint(0, 3) == 2:
                     obstacles.append(Virus1(VIRUS))
                 elif random.randint(0, 3) == 3:
                     obstacles.append(Virus2(VIRUS))
 
-            if len(powers) == 0:
-                if random.randint(0, 3) == 0:
-                    powers.append(Vaksin(VAKSIN))
+            if len(powers) == 0 and points == 1000:
+#                if random.randint(0, 3) == 0:
+                powers.append(Vaksin(VAKSIN))
 
             for obstacle in obstacles:
                 obstacle.draw(screen)
@@ -316,12 +323,11 @@ def main():
                         death_count += 1
                         menu(death_count)
 
-            # for power in powers:
-            #     power.draw(screen)
-            #     power.update()
-            #     if pemain.rect.colliderect(power.rect):
-            #         changeProtected(True)
-            #         Timer(3.0, changeProtected, False)
+            for power in powers:
+                power.draw(screen)
+                power.update()
+                if pemain.rect.colliderect(power.rect):                    
+                    changeProtected(True)   
 
         score()
         pygame.display.update()
