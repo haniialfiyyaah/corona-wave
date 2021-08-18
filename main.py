@@ -46,6 +46,8 @@ bg_img = pygame.image.load('gambar/background/bg1.png')
 bg_width = bg_img.get_width()
 track = pygame.image.load('gambar/background/track2.png')
 track_width = track.get_width()
+trophy = pygame.image.load('gambar/trophy.png')
+
 
 #menu
 start_menu = pygame.image.load('gambar/menu/start_menu.png')
@@ -247,11 +249,11 @@ def main():
         if points % 500 == 0:
             game_speed += 1
 
-        text = font.render('Points: ' + str(points), True, (0, 23, 158))
+        text = font.render('Poin: ' + str(points), True, (0, 23, 158))
         textRect = text.get_rect()
         textRect.center = (700, 40)
         screen.blit(text, textRect)
-        if points == 2000 or points == 6000: #limit vaksin
+        if points == 2000 or points == 7000: #limit vaksin
             pemain.protected = False
 
     def draw_bg():
@@ -304,7 +306,7 @@ def main():
                 pemain.update_action(0)  # 0: diam
             pemain.move()
 
-            if len(obstacles) == 0:
+            if len(obstacles) == 0 and points < 7300:
                 if random.randint(0, 3) == 0:
                     obstacles.append(Orang(ORANG_SINGLE))
 #                elif random.randint(0, 3) == 1:
@@ -313,6 +315,8 @@ def main():
                     obstacles.append(Virus1(VIRUS))
                 elif random.randint(0, 3) == 3:
                     obstacles.append(Virus2(VIRUS))
+
+
 
             if len(powers) == 0 and (points == 1000 or points == 3000):
 #                if random.randint(0, 3) == 0:
@@ -332,12 +336,14 @@ def main():
                 power.update()
                 if pemain.rect.colliderect(power.rect):                    
                     changeProtected(True)   
-            
-            if points == 500: #Win end game
+
+            if points == 7621: #Win end game
                 pygame.time.delay(1000)
                 death_count += 2
                 menu(death_count)
 
+        if points >= 7450:
+            screen.blit(trophy,(400,335))
         
         score()
         pygame.display.update()
@@ -357,10 +363,10 @@ def menu(death_count):
                                0))
             screen.blit(start_menu,(0,0))  
         elif death_count == 1: #restart
-            text = font.render('Game Over', True, (0, 23,
+            text = font.render('Anda Kalah ', True, (0, 23,
                                158))
             screen.blit(restart_menu,(0,0))
-            score = font.render('Your Score: ' + str(points), True, (0,
+            score = font.render('Skor: ' + str(points), True, (0,
                                 23, 158))
             scoreRect = score.get_rect()
             scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2
@@ -371,7 +377,7 @@ def menu(death_count):
             text = font.render('', True, (255, 0,
                                0))
             screen.blit(win,(0,0))                               
-            score = font.render('Score: ' + str(points), True, (0,
+            score = font.render('Skor: ' + str(points), True, (0,
                                 23, 158))
             scoreRect = score.get_rect()
             scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2
