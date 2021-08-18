@@ -1,5 +1,7 @@
 import pygame
 import os
+import random
+import threading
 
 pygame.init()
 
@@ -9,17 +11,30 @@ SCREEN_HEIGHT = 480
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Corona Wave")
 
+icon = pygame.image.load('gambar/virus/1.png')
+pygame.display.set_icon(icon)
+
 #framerate
 clock = pygame.time.Clock()
 FPS = 60
 
 
 #define game variables
-GRAVITY = 0.75
+GRAVITY = 0.5
 
 #player action
 walk = False
 
+
+#obstacle
+VIRUS = [pygame.image.load(os.path.join('gambar/virus', '0.png')),
+        pygame.image.load(os.path.join('gambar/virus', '1.png'))]
+
+ORANG_DOUBLE = [pygame.image.load(os.path.join('gambar/orang', 'double1.png')),
+        pygame.image.load(os.path.join('gambar/orang', 'double2.png'))]
+
+ORANG_SINGLE = [pygame.image.load(os.path.join('gambar/orang', 'single1.png')),
+        pygame.image.load(os.path.join('gambar/orang', 'single2.png'))]
 
 
 #world
@@ -74,7 +89,7 @@ class Manusia(pygame.sprite.Sprite):
 
         #jump
         if self.jump == True and self.in_air == False:
-            self.vel_y = -15
+            self.vel_y = -11
             self.jump = False
             self.in_air = True
 
@@ -121,14 +136,66 @@ class Manusia(pygame.sprite.Sprite):
     def draw(self):
         screen.blit(self.image, self.rect)    
 
+
+class Obstacle:
+
+    def __init__(self, image, type):
+        self.image = image
+        self.type = type
+        self.rect = self.image[self.type].get_rect()
+        self.rect.x = SCREEN_WIDTH
+
+    def update(self):
+        self.rect.x -= game_speed
+        if self.rect.x < -self.rect.width:
+            obstacles.pop()
+
+    def draw(self, SCREEN):
+        SCREEN.blit(self.image[self.type], self.rect)
+
+class Virus1(Obstacle):
+
+    def __init__(self, image):
+        self.type = 0
+        super().__init__(image, self.type)
+        self.rect.y = 285
+        self.index = 0
+
+    def draw(self, SCREEN):
+        if self.index >= 9:
+            self.index = 0
+        SCREEN.blit(self.image[self.index // 5], self.rect)
+        self.index += 1
+
+class Virus2(Obstacle):
+
+    def __init__(self, image):
+        self.type = 0
+        super().__init__(image, self.type)
+        self.rect.y = 340
+        self.index = 0
+
+    def draw(self, SCREEN):
+        if self.index >= 9:
+            self.index = 0
+        SCREEN.blit(self.image[self.index // 5], self.rect)
+        self.index += 1
+
+class Orang(Obstacle):
+
+    def __init__(self, image):
+        self.type = random.randint(0, 1)
+        super().__init__(image, self.type)
+        self.rect.y = 335
+
 pemain = Manusia('pemain',125,300,2,5)
-kerumunan = Manusia('kerumunan',200,300,2,5)
 
 run = True
 bg_x_pos = 0
 floor_x_pos = 0
-game_speed = 3
+game_speed = 5
 
+obstacles = []
 
 while run:
 
@@ -139,7 +206,6 @@ while run:
 
     pemain.update_animation()
     pemain.draw()
-    kerumunan.draw()
 
     #update player action
     if pemain.alive:
@@ -151,6 +217,16 @@ while run:
             pemain.update_action(0)#0: diam
         pemain.move()
 
+        if len(obstacles) == 0:
+            if random.randint(0, 3) == 0:
+               obstacles.append(Orang(ORANG_SINGLE))
+            elif random.randint(0, 3) == 1:
+               obstacles.append(Orang(ORANG_DOUBLE))
+            elif random.randint(0, 3) == 2:
+                obstacles.append(Virus1(VIRUS))
+            elif random.randint(0, 3) == 3:
+                obstacles.append(Virus2(VIRUS))
+
     for event in pygame.event.get():
         #quit game
         if event.type == pygame.QUIT:
@@ -158,8 +234,9 @@ while run:
         #keyboard press
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE and pemain.alive:
-                pemain.jump = True
                 walk = True
+                pemain.jump = True
+                
 
         #keyboard release
 
@@ -173,6 +250,12 @@ while run:
         if floor_x_pos <= -track_width:
             floor_x_pos = 0
         floor_x_pos -= game_speed
+
+        
+        for obstacle in obstacles:
+            obstacle.draw(screen)
+            obstacle.update()
+
 
 
 
