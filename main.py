@@ -38,20 +38,10 @@ ORANG_SINGLE = [pygame.image.load(os.path.join('gambar/orang', 'single1.png')),
 
 
 #world
-BG = (255,255,255)
 bg_img = pygame.image.load('gambar/background/bg1.png')
 bg_width = bg_img.get_width()
 track = pygame.image.load('gambar/background/track2.png')
 track_width = track.get_width()
-
-
-def draw_bg():
-    screen.fill(BG)
-    screen.blit(bg_img, (bg_x_pos, 0))
-    screen.blit(bg_img, (bg_x_pos + bg_width, 0))
-    screen.blit(bg_img, (bg_x_pos + bg_width*2, 0))
-    screen.blit(track, (floor_x_pos, 405))
-    screen.blit(track, (floor_x_pos + track_width, 405))
 
 class Manusia(pygame.sprite.Sprite):
     def __init__(self, char_type, x, y,scale, speed):
@@ -188,79 +178,132 @@ class Orang(Obstacle):
         super().__init__(image, self.type)
         self.rect.y = 335
 
-pemain = Manusia('pemain',125,300,2,5)
 
-run = True
-bg_x_pos = 0
-floor_x_pos = 0
-game_speed = 5
+def main():
+    global game_speed, bg_x_pos, floor_x_pos, points, obstacles, walk
+    run = True
+    walk = True
+    clock = pygame.time.Clock()
+    pemain = Manusia('pemain',125,300,2,5)
+    game_speed = 5
+    bg_x_pos = 0
+    floor_x_pos = 0
+    points = 0
+    font = pygame.font.Font('freesansbold.ttf', 20)
+    obstacles = [] 
+    death_count = 0
 
-obstacles = []
+    def score():
+        global points, game_speed
+        points += 1
+        if points % 500 == 0:
+            game_speed += 1
 
-while run:
+        text = font.render('Points: ' + str(points), True, (255, 255, 255))
+        textRect = text.get_rect()
+        textRect.center = (700, 40)
+        screen.blit(text, textRect)
 
-    
-    draw_bg()
-   
-    clock.tick(FPS)
-
-    pemain.update_animation()
-    pemain.draw()
-
-    #update player action
-    if pemain.alive:
-        if pemain.in_air:
-            pemain.update_action(2)#lompat
-        elif walk:
-            pemain.update_action(1)#1: lari
-        else:
-            pemain.update_action(0)#0: diam
-        pemain.move()
-
-        if len(obstacles) == 0:
-            if random.randint(0, 3) == 0:
-               obstacles.append(Orang(ORANG_SINGLE))
-            elif random.randint(0, 3) == 1:
-               obstacles.append(Orang(ORANG_DOUBLE))
-            elif random.randint(0, 3) == 2:
-                obstacles.append(Virus1(VIRUS))
-            elif random.randint(0, 3) == 3:
-                obstacles.append(Virus2(VIRUS))
-
-    for event in pygame.event.get():
-        #quit game
-        if event.type == pygame.QUIT:
-            run = False
-        #keyboard press
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and pemain.alive:
-                walk = True
-                pemain.jump = True
-                
-
-        #keyboard release
-
-
-    if walk:
-#        bg_width -= 1
+    def draw_bg():
+        global bg_x_pos, floor_x_pos
+        screen.blit(bg_img, (bg_x_pos, 0))
+        screen.blit(bg_img, (bg_x_pos + bg_width, 0))
+        screen.blit(bg_img, (bg_x_pos + bg_width*2, 0))
+        screen.blit(track, (floor_x_pos, 405))
+        screen.blit(track, (floor_x_pos + track_width, 405))
+#        if walk:
         if bg_x_pos <= -(bg_width*2):
             bg_x_pos = 0
         bg_x_pos -= game_speed
-#        floor_x_pos -= 1
         if floor_x_pos <= -track_width:
             floor_x_pos = 0
         floor_x_pos -= game_speed
 
+    while run:
+        for event in pygame.event.get():
+            #quit game
+            if event.type == pygame.QUIT:
+                run = False
+            #keyboard press
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_KP_ENTER and pemain.alive:
+                    walk = True
+                if event.key == pygame.K_SPACE and pemain.alive:
+                    pemain.jump = True
+
+      
+        draw_bg()
+        clock.tick(FPS)
+        pemain.draw()
+        pemain.update_animation()
+
+        #update player action
+        if pemain.alive:
+            if pemain.in_air:
+                pemain.update_action(2)#lompat
+            elif walk:
+                pemain.update_action(1)#1: lari
+            else:
+                pemain.update_action(0)#0: diam
+            pemain.move()
+
+            if len(obstacles) == 0:
+                if random.randint(0, 3) == 0:
+                    obstacles.append(Orang(ORANG_SINGLE))
+                elif random.randint(0, 3) == 1:
+                    obstacles.append(Orang(ORANG_DOUBLE))
+                elif random.randint(0, 3) == 2:
+                    obstacles.append(Virus1(VIRUS))
+                elif random.randint(0, 3) == 3:
+                    obstacles.append(Virus2(VIRUS))
+
+            for obstacle in obstacles:
+                obstacle.draw(screen)
+                obstacle.update()
+                if pemain.rect.colliderect(obstacle.rect):
+                    pygame.time.delay(2000)
+                    death_count += 1
+                    menu(death_count)
+
         
-        for obstacle in obstacles:
-            obstacle.draw(screen)
-            obstacle.update()
+        score()                     
+        pygame.display.update()
 
 
+#pygame.quit()
+
+def menu(death_count):
+    global points, walk
+    run = True
+    while run:
+        screen.fill((255, 255, 255))
+        font = pygame.font.Font('freesansbold.ttf', 30)
+
+        if death_count == 0:
+            text = font.render('Press any key to Start', True, (0, 0,
+                               0))
+        elif death_count > 0:
+            text = font.render('Press any key to Restart', True, (0, 0,
+                               0))
+            score = font.render('Your Score: ' + str(points), True, (0,
+                                0, 0))
+            scoreRect = score.get_rect()
+            scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2
+                                + 50)
+            screen.blit(score, scoreRect)
+        textRect = text.get_rect()
+        textRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+        screen.blit(text, textRect)
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                pygame.display.quit()
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                main()        
 
 
-
-    pygame.display.update()
-
-
-pygame.quit()
+t1 = threading.Thread(target=menu(death_count=0), daemon=True)
+t1.start()
