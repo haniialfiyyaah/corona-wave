@@ -47,6 +47,10 @@ bg_width = bg_img.get_width()
 track = pygame.image.load('gambar/background/track2.png')
 track_width = track.get_width()
 
+#menu
+start_menu = pygame.image.load('gambar/menu/start_menu.png')
+restart_menu = pygame.image.load('gambar/menu/restart.png')
+win = pygame.image.load('gambar/menu/win.png')
 
 class Manusia(pygame.sprite.Sprite):
     def __init__(self, char_type, x, y, scale, speed):
@@ -247,7 +251,7 @@ def main():
         textRect = text.get_rect()
         textRect.center = (700, 40)
         screen.blit(text, textRect)
-        if points == 2000: #limit vaksin
+        if points == 2000 or points == 6000: #limit vaksin
             pemain.protected = False
 
     def draw_bg():
@@ -310,7 +314,7 @@ def main():
                 elif random.randint(0, 3) == 3:
                     obstacles.append(Virus2(VIRUS))
 
-            if len(powers) == 0 and points == 1000:
+            if len(powers) == 0 and (points == 1000 or points == 3000):
 #                if random.randint(0, 3) == 0:
                 powers.append(Vaksin(VAKSIN))
 
@@ -319,7 +323,7 @@ def main():
                 obstacle.update()
                 if pemain.protected == False:
                     if pemain.rect.colliderect(obstacle.rect):
-                        pygame.time.delay(2000)
+                        pygame.time.delay(1000)
                         death_count += 1
                         menu(death_count)
 
@@ -328,7 +332,13 @@ def main():
                 power.update()
                 if pemain.rect.colliderect(power.rect):                    
                     changeProtected(True)   
+            
+            if points == 500: #Win end game
+                pygame.time.delay(1000)
+                death_count += 2
+                menu(death_count)
 
+        
         score()
         pygame.display.update()
 
@@ -340,22 +350,35 @@ def menu(death_count):
     run = True
     while run:
         screen.fill((255, 255, 255))
-        font = pygame.font.Font('freesansbold.ttf', 30)
+        font = pygame.font.Font('freesansbold.ttf', 20)
 
-        if death_count == 0:
-            text = font.render('Press any key to Start', True, (0, 0,
+        if death_count == 0: #start menu
+            text = font.render('', True, (0, 0,
                                0))
-        elif death_count > 0:
-            text = font.render('Press any key to Restart', True, (0, 0,
-                               0))
+            screen.blit(start_menu,(0,0))  
+        elif death_count == 1: #restart
+            text = font.render('Game Over', True, (0, 23,
+                               158))
+            screen.blit(restart_menu,(0,0))
             score = font.render('Your Score: ' + str(points), True, (0,
-                                0, 0))
+                                23, 158))
             scoreRect = score.get_rect()
             scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2
-                                + 50)
+                                + 100)
+            screen.blit(score, scoreRect)
+
+        elif death_count > 1: #win
+            text = font.render('', True, (255, 0,
+                               0))
+            screen.blit(win,(0,0))                               
+            score = font.render('Score: ' + str(points), True, (0,
+                                23, 158))
+            scoreRect = score.get_rect()
+            scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2
+                                + 40)
             screen.blit(score, scoreRect)
         textRect = text.get_rect()
-        textRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+        textRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 70)
         screen.blit(text, textRect)
         pygame.display.update()
         for event in pygame.event.get():
