@@ -16,18 +16,18 @@ pygame.display.set_caption("Corona Wave")
 icon = pygame.image.load('gambar/virus/1.png')
 pygame.display.set_icon(icon)
 
-# framerate
+# Framerate
 clock = pygame.time.Clock()
 FPS = 60
 
 
-# define game variables
+# Game variables
 GRAVITY = 0.5
 
-# player action
+# Player action
 walk = False
 
-#Load music
+#Load musik dan sound fx
 pygame.mixer.music.load('audio/gameplay_backsound.mp3')
 pygame.mixer.music.set_volume(0.3)
 pygame.mixer.music.play(-1, 0.0, 5000)
@@ -41,7 +41,7 @@ win_fx = pygame.mixer.Sound('audio/Ta Da-SoundBible.com-1884170640.wav')
 win_fx.set_volume(0.5)
 
 
-# obstacle
+#Load gambar obstacle
 VIRUS = [pygame.image.load(os.path.join('gambar/virus', '0.png')),
          pygame.image.load(os.path.join('gambar/virus', '1.png'))]
 
@@ -57,7 +57,7 @@ VAKSIN = [pygame.image.load(os.path.join('gambar/vaksin', 'vaksin.png')),
           pygame.image.load(os.path.join('gambar/vaksin', 'vaksin.png'))]
 
 
-# world
+#Load gambar world
 bg_img = pygame.image.load('gambar/background/bg1.png')
 bg_width = bg_img.get_width()
 track = pygame.image.load('gambar/background/track2.png')
@@ -65,11 +65,13 @@ track_width = track.get_width()
 trophy = pygame.image.load('gambar/trophy.png')
 
 
-#menu
+#Load gambar tampilan menu
 start_menu = pygame.image.load('gambar/menu/start_menu.png')
 restart_menu = pygame.image.load('gambar/menu/restart.png')
 win = pygame.image.load('gambar/menu/win.png')
 
+
+##KELAS-KELAS OBJEK
 class Manusia(pygame.sprite.Sprite):
     def __init__(self, char_type, x, y, scale, speed):
         pygame.sprite.Sprite.__init__(self)
@@ -83,10 +85,9 @@ class Manusia(pygame.sprite.Sprite):
         self.frame_index = 0
         self.action = 0
         self.update_time = pygame.time.get_ticks()
-
         self.protected = False
 
-        # load images
+        # load gambar
         animation_type = ['Diam', 'Lari', 'Lompat', 'Kebal', 'Jump']
         for animation in animation_type:
             # reset temporary list
@@ -261,7 +262,7 @@ def main():
         textRect = text.get_rect()
         textRect.center = (700, 40)
         screen.blit(text, textRect)
-        if points == 2000 or points == 7621: #limit vaksin
+        if points == 2000 or points == 7621: #Limit vaksin
             pemain.protected = False
 
     def draw_bg():
@@ -281,7 +282,6 @@ def main():
     def changeProtected(val):
         pemain.protected = val
 
-
     while run:
         for event in pygame.event.get():
             # quit game
@@ -293,7 +293,6 @@ def main():
                     jump_fx.play()
                     pemain.jump = True
                     
-
         draw_bg()
         clock.tick(FPS)
         pemain.draw()
@@ -313,6 +312,7 @@ def main():
                 pemain.update_action(0)  # 0: diam
             pemain.move()
 
+            #random gambar obstacle
             if len(obstacles) == 0 and points < 7300:
                 if random.randint(0, 3) == 0:
                     obstacles.append(Orang(ORANG_SINGLE))
@@ -323,12 +323,11 @@ def main():
                 elif random.randint(0, 3) == 3:
                     obstacles.append(Virus2(VIRUS))
 
-
-
             if len(powers) == 0 and (points == 1000 or points == 3000):
 #                if random.randint(0, 3) == 0:
                 powers.append(Vaksin(VAKSIN))
-
+            
+            #draw obstacle
             for obstacle in obstacles:
                 obstacle.draw(screen)
                 obstacle.update()
@@ -353,15 +352,13 @@ def main():
                 pygame.time.delay(1000)
                 death_count += 2
                 menu(death_count)
-
+        
+        #load gambar trophy
         if points >= 7450:
             screen.blit(trophy,(400,335))
         
         score()
         pygame.display.update()
-
-
-# pygame.quit()
 
 def menu(death_count):
     global points, walk
@@ -407,7 +404,6 @@ def menu(death_count):
                 exit()
             if event.type == pygame.KEYDOWN:
                 main()
-
 
 t1 = threading.Thread(target=menu(death_count=0), daemon=True)
 t1.start()
