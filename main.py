@@ -1,9 +1,10 @@
 import pygame
+from pygame import mixer
 import os
 import random
 import threading
-from threading import Timer
 
+mixer.init()
 pygame.init()
 
 SCREEN_WIDTH = 800
@@ -26,15 +27,30 @@ GRAVITY = 0.5
 # player action
 walk = False
 
+#Load music
+pygame.mixer.music.load('audio/gameplay_backsound.mp3')
+pygame.mixer.music.set_volume(0.3)
+pygame.mixer.music.play(-1, 0.0, 5000)
+jump_fx = pygame.mixer.Sound('audio/jumping.wav')
+jump_fx.set_volume(0.5)
+vaksin_fx = pygame.mixer.Sound('audio/got_vaccine.wav')
+jump_fx.set_volume(0.5)
+death_fx = pygame.mixer.Sound('audio/death.wav')
+jump_fx.set_volume(0.5)
+win_fx = pygame.mixer.Sound('audio/Ta Da-SoundBible.com-1884170640.wav')
+win_fx.set_volume(0.5)
+
 
 # obstacle
 VIRUS = [pygame.image.load(os.path.join('gambar/virus', '0.png')),
          pygame.image.load(os.path.join('gambar/virus', '1.png'))]
 
 ORANG_DOUBLE = [pygame.image.load(os.path.join('gambar/orang', 'double1.png')),
-                pygame.image.load(os.path.join('gambar/orang', 'double2.png'))]
+                pygame.image.load(os.path.join('gambar/orang', 'double2.png')),
+                pygame.image.load(os.path.join('gambar/orang', 'double3.png'))]
 
 ORANG_SINGLE = [pygame.image.load(os.path.join('gambar/orang', 'single1.png')),
+                pygame.image.load(os.path.join('gambar/orang', 'single2.png')),
                 pygame.image.load(os.path.join('gambar/orang', 'single2.png'))]
 
 VAKSIN = [pygame.image.load(os.path.join('gambar/vaksin', 'vaksin.png')),
@@ -190,7 +206,7 @@ class Virus2(Obstacle):
 class Orang(Obstacle):
 
     def __init__(self, image):
-        self.type = random.randint(0, 1)
+        self.type = random.randint(0, 2)
         super().__init__(image, self.type)
         self.rect.y = 335
 
@@ -216,20 +232,12 @@ class Vaksin(Power):
 
     def __init__(self, image):
         self.type = 0
-        # img = pygame.transform.scale(
-        #     image, (int(image.get_width() * 5), int(image.get_height() * 5)))
         super().__init__(image, self.type)
         self.rect.y = 335
 
-    # def draw(self, SCREEN):
-    #     if self.index >= 9:
-    #         self.index = 0
-    #     SCREEN.blit(self.image[0], self.rect)
-    #     self.index += 1
-
 
 def main():
-    global game_speed, bg_x_pos, floor_x_pos, points, obstacles, walk, powers
+    global game_speed, bg_x_pos, floor_x_pos, points, obstacles, walk, powers, pemain
     run = True
     walk = True
     clock = pygame.time.Clock()
@@ -253,7 +261,7 @@ def main():
         textRect = text.get_rect()
         textRect.center = (700, 40)
         screen.blit(text, textRect)
-        if points == 2000 or points == 7000: #limit vaksin
+        if points == 2000 or points == 7621: #limit vaksin
             pemain.protected = False
 
     def draw_bg():
@@ -263,7 +271,6 @@ def main():
         screen.blit(bg_img, (bg_x_pos + bg_width*2, 0))
         screen.blit(track, (floor_x_pos, 405))
         screen.blit(track, (floor_x_pos + track_width, 405))
-#        if walk:
         if bg_x_pos <= -(bg_width*2):
             bg_x_pos = 0
         bg_x_pos -= game_speed
@@ -282,10 +289,10 @@ def main():
                 run = False
             # keyboard press
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_KP_ENTER and pemain.alive:
-                    walk = True
                 if event.key == pygame.K_SPACE and pemain.alive:
+                    jump_fx.play()
                     pemain.jump = True
+                    
 
         draw_bg()
         clock.tick(FPS)
@@ -309,8 +316,8 @@ def main():
             if len(obstacles) == 0 and points < 7300:
                 if random.randint(0, 3) == 0:
                     obstacles.append(Orang(ORANG_SINGLE))
-#                elif random.randint(0, 3) == 1:
-#                    obstacles.append(Orang(ORANG_DOUBLE))
+                elif random.randint(0, 3) == 1 and points >= 3000:
+                    obstacles.append(Orang(ORANG_DOUBLE))
                 elif random.randint(0, 3) == 2:
                     obstacles.append(Virus1(VIRUS))
                 elif random.randint(0, 3) == 3:
@@ -327,7 +334,8 @@ def main():
                 obstacle.update()
                 if pemain.protected == False:
                     if pemain.rect.colliderect(obstacle.rect):
-                        pygame.time.delay(1000)
+                        death_fx.play()
+                        pygame.time.delay(2000)
                         death_count += 1
                         menu(death_count)
 
@@ -335,9 +343,13 @@ def main():
                 power.draw(screen)
                 power.update()
                 if pemain.rect.colliderect(power.rect):                    
+                    vaksin_fx.play()
                     changeProtected(True)   
 
+
             if points == 7621: #Win end game
+                pygame.mixer.music.stop()
+                win_fx.play()
                 pygame.time.delay(1000)
                 death_count += 2
                 menu(death_count)
